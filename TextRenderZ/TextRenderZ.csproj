@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net47</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
+    
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>Guy Langston</Authors>
+    <PackageProjectUrl>https://github.com/guylangston/GL.Standard/TextRenderZ</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/guylangston/GL.Standard</RepositoryUrl>
+    <Description>Common low-dependancy, low-surface area components across many projects</Description>
+    <Copyright>MIT</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    
+  </PropertyGroup>
+
+</Project>
