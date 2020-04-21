@@ -9,21 +9,21 @@ namespace TextRenderZ.Reporting
     
     public class CellStyle
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
         public TextAlign TextAlign { get; set; }
         
     }
     
     public class Cell
     {
-        public object Value { get; set; }
-        public object ValueDisplay { get; set; }        // Check for ICellValue for more complex rules
-        public CellStyle Style { get; set; }
-        public Exception Error { get; set; }
+        public object? Value { get; set; }
+        public object? ValueDisplay { get; set; }        // Check for ICellValue for more complex rules
+        public CellStyle? Style { get; set; }
+        public Exception? Error { get; set; }
 
-        public object GetValue() => ValueDisplay ?? Value;  
-        public string GetValueString() => GetValue()?.ToString();
+        public object? GetValue() => ValueDisplay ?? Value;  
+        public string? GetValueString() => GetValue()?.ToString();
     }
 
     public interface ICellValue
@@ -40,8 +40,8 @@ namespace TextRenderZ.Reporting
             Cell = cell;
         }
 
-        public string Prefix { get;  }
-        public string Suffix { get;  }
+        public string? Prefix { get;  }
+        public string? Suffix { get;  }
         public Cell Cell { get;  }
     }
     

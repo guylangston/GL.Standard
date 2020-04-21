@@ -27,7 +27,6 @@ namespace TextRenderZ.Reporting
         public MapToReporting<T> AddColumn<TP>(Expression<Func<T, TP>> exp)
         {
             throw new NotImplementedException();
-            return this;
         }
 
         
@@ -99,7 +98,7 @@ namespace TextRenderZ.Reporting
             }
 
             public Type ValueType { get;  }
-            public Func<object, Cell> GetCell { get; set; }
+            public Func<object?, Cell> GetCell { get; set; }
             
             public PropertyInfo? PropertyInfo { get; set; }
             public string?  StringFormat { get; set; }

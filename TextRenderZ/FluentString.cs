@@ -21,13 +21,13 @@ namespace TextRenderZ
         public override string ToString() => sb.ToString();
         public static  implicit operator string(FluentString ff) => ff.ToString();
 
-        public FluentString Append(string s)
+        public FluentString Append(string? s)
         {
             if (s != null) sb.Append(s);
             return this;
         }
         
-        public FluentString AppendLine(string s)
+        public FluentString AppendLine(string? s)
         {
             if (s != null) sb.AppendLine(s);
             return this;
@@ -117,7 +117,7 @@ namespace TextRenderZ
         
         public static FluentString Create() => new FluentString();
         
-        public static FluentString CreateHtmlUL<T>(IEnumerable<T> items, Action<FluentString, T> each, string style = "ul-compact") 
+        public static FluentString CreateHtmlUl<T>(IEnumerable<T> items, Action<FluentString, T> each, string style = "ul-compact") 
             => new FluentString()
                .Append($"<ul class='{style}'>")
                .ForEach(items, (f, d) =>

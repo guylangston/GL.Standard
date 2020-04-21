@@ -17,7 +17,7 @@ namespace TextRenderZ
         {
             using (var r = new StringReader(txt))
             {
-                string l = null;
+                string? l = null;
                 while ((l = r.ReadLine()) != null)
                 {
                     yield return l;

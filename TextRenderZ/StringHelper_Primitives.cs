@@ -23,7 +23,7 @@ namespace TextRenderZ
 
         }
         
-        public static string Truncate(string txt, int max, string elipse = "...")
+        public static string? Truncate(string? txt, int max, string elipse = "...")
         {
             if (txt == null) return null;
             if (txt.Length < max) return txt;
@@ -46,11 +46,11 @@ namespace TextRenderZ
             return text.Substring(0, size);
         }
 
-        public static string TextBetween(string text, string start, string end)
+        public static string? TextBetween(string text, string start, string end)
         {
-            var s = text.IndexOf(start);
+            var s = text.IndexOf(start, StringComparison.InvariantCultureIgnoreCase);
             if (s < 0) return null;
-            var e = text.IndexOf(end, s);
+            var e = text.IndexOf(end, s, StringComparison.InvariantCultureIgnoreCase);
             if (e < 0) return null;
             return text.Substring(s + start.Length, e - (s + start.Length));
         }
@@ -58,7 +58,7 @@ namespace TextRenderZ
         public static string TextBetween(string text, int start, int startLen, int end) 
             => text.Substring(start + startLen, end - (start + startLen));
 
-        public static string Elipse(string text, int max, string elipse = "...")
+        public static string? Elipse(string? text, int max, string elipse = "...")
         {
             if (text == null) return null;
             text = text.Replace('\n', '|').Replace('\r', '|').Replace('\f', '|');
@@ -73,7 +73,7 @@ namespace TextRenderZ
             => (raw.Substring(0, idx), raw.Substring(idx , raw.Length - idx));
         
         
-        public static string TrimWhile(string txt, Func<char, bool> removeIf)
+        public static string? TrimWhile(string? txt, Func<char, bool> removeIf)
         {
             if (txt == null) return null;
 

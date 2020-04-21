@@ -26,7 +26,7 @@ namespace TextRenderZ.Reporting
             for (var ii = 0; ii < columns.Count; ii++)
             {
                 var col = columns[ii];
-                outp.Write(col.Title.PadRight(maxSize[ii]));
+                outp.Write(col.Title?.PadRight(maxSize[ii]));
                 outp.Write(" | ");
             }
             outp.WriteLine();
@@ -85,8 +85,8 @@ namespace TextRenderZ.Reporting
 
         }
 
-        private Cell[,] GenerateTable<T>(IMapToReporting<T> mapping, IEnumerable<T> items) => GenerateTable<T>(mapping.GetRows(items).Select(x=>x.ToList()).ToList());
-        private Cell[,] GenerateTable<T>(List<List<Cell>> byList)
+        private Cell[,]? GenerateTable<T>(IMapToReporting<T> mapping, IEnumerable<T> items) => GenerateTable<T>(mapping.GetRows(items).Select(x=>x.ToList()).ToList());
+        private Cell[,]? GenerateTable<T>(List<List<Cell>> byList)
         {
             if (byList == null || byList.Count == 0) return null;
             
