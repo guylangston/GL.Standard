@@ -36,7 +36,7 @@ namespace TextRenderZ.Reporting
             p.GetCell = o => CellFactory(p, o);
             columns.Add(p);
             
-            Cell CellFactory(PropToColumn propToColumn, object o) =>
+            Cell CellFactory(PropToColumn propToColumn, object? o) =>
                 AdaptForDisplay(new Cell()
                 {
                     Style = propToColumn,
@@ -55,11 +55,11 @@ namespace TextRenderZ.Reporting
             p.GetCell = o => CellFactory(p, o);
             columns.Add(p);
             
-            Cell CellFactory(PropToColumn propToColumn, object o) =>
+            Cell CellFactory(PropToColumn propToColumn, object? o) =>
                 AdaptForDisplay(new Cell()
                 {
                     Style = propToColumn,
-                    Value = propToColumn.PropertyInfo.GetValue(o)
+                    Value = propToColumn.PropertyInfo!.GetValue(o)
                 });
             return this;
         }
@@ -98,7 +98,7 @@ namespace TextRenderZ.Reporting
             }
 
             public Type ValueType { get;  }
-            public Func<object?, Cell> GetCell { get; set; }
+            public Func<object?, Cell>? GetCell { get; set; }
             
             public PropertyInfo? PropertyInfo { get; set; }
             public string?  StringFormat { get; set; }

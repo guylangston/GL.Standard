@@ -13,7 +13,7 @@
     <Description>Common low-dependancy, low-surface area components across many projects</Description>
     <Copyright>MIT</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReleaseNotes></PackageReleaseNotes>
+<!--    <PackageReleaseNotes></PackageReleaseNotes>-->
     
   </PropertyGroup>
 
