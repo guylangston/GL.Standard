@@ -11,7 +11,11 @@ namespace TextRenderZ.Reporting
 {
     public static class MapToReporting
     {
+        public static MapToReporting<T> Create<T>(IEnumerable<T> _) => new MapToReporting<T>();
         public static MapToReporting<T>  Create<T>() => new MapToReporting<T>();
+        
+        public static MapToReporting<T> Create<T>(IMapToReportingCellAdapter adapter) => new MapToReporting<T>(adapter);
+        public static MapToReporting<T> Create<T>(IMapToReportingCellAdapter adapter, IEnumerable<T> _) => new MapToReporting<T>(adapter);
     }
 
     public interface IMapToReportingCellAdapter
@@ -19,16 +23,23 @@ namespace TextRenderZ.Reporting
         Cell ConvertToCell(ColumnInfo col, object value);
         Cell ConvertToCell(ColumnInfo col, Exception error);
     }
+    
+    
 
     public class MapToReporting<T> : IMapToReporting<T>
     {
         private readonly List<ColumnInfo> columns = new List<ColumnInfo>();
         private PropertyInfo[] props;
-
-        public MapToReporting()
+        
+        public MapToReporting(IMapToReportingCellAdapter cellAdapter)
         {
-            this.props = typeof(T).GetProperties();
+            this.props  = typeof(T).GetProperties();
+            CellAdapter = cellAdapter;
         }
+
+        public MapToReporting() : this(new MapToReportingCellAdapter()) { }
+
+        
 
         public IMapToReportingCellAdapter CellAdapter { get; set; }
 
@@ -37,20 +48,27 @@ namespace TextRenderZ.Reporting
             throw new NotImplementedException();
         }
 
-        public MapToReporting<T> AddColumn<TP>(string title, Func<T, TP> getVal)
+        public MapToReporting<T> AddColumn<TP>(string title, Func<T, TP> getVal, Action<ColumnInfo>? setupCol = null)
         {
 #pragma warning disable 8605
-            columns.Add(new ColumnInfoFunc(typeof(TP), typeof(T), title, o => (object?)getVal((T) o)));
+            var columnInfoFunc = new ColumnInfoFunc(typeof(TP), typeof(T), title, o => (object?)getVal((T) o));
 #pragma warning restore 8605
+            if (setupCol != null) setupCol(columnInfoFunc);
+            columns.Add(columnInfoFunc);
+
+            
             return this;
         }
         
-        public MapToReporting<T> AddColumn(string propName) => AddColumn(props.First(x => x.Name == propName));
-        public MapToReporting<T> AddColumn(PropertyInfo info)
+        
+        public MapToReporting<T> AddColumn(string? title, PropertyInfo info, Action<ColumnInfo> setupCol = null)
         {
-            columns.Add(new ColumnInfoPropertyInfo(info, typeof(T), info.Name));
+            var columnInfoPropertyInfo = new ColumnInfoPropertyInfo(info, typeof(T), title ?? info.Name);
+            columns.Add(columnInfoPropertyInfo);
+            if (setupCol != null) setupCol(columnInfoPropertyInfo);
             return this;
         }
+        public MapToReporting<T> AddColumn(string propName) => AddColumn(null, props.First(x => x.Name == propName), null);
         
         class ColumnInfoFunc : ColumnInfo
         {
@@ -115,7 +133,16 @@ namespace TextRenderZ.Reporting
                 try
                 {
                     var obj = col.GetCellValue(data);
-                    return owner.CellAdapter.ConvertToCell(col, obj);
+                    var c =  owner.CellAdapter.ConvertToCell(col, obj);
+                    if (col.Adapters != null) 
+                    {
+                        foreach (var adapter in col.Adapters)
+                        {
+                            adapter.Adapt(c);
+                        }    
+                    }
+
+                    return c;
                 }
                 catch (Exception e)
                 {

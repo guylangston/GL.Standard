@@ -5,8 +5,25 @@ using System.Text;
 
 namespace TextRenderZ.Reporting
 {
+    public interface ICellAdapter
+    {
+        void Adapt(Cell cell);
+    }
+
+    public class CellAdapter : ICellAdapter
+    {
+        private readonly Action<Cell> func;
+
+        public CellAdapter(Action<Cell> func)
+        {
+            this.func = func;
+        }
+
+        public void Adapt(Cell cell) => func(cell);
+    }
+    
     public enum TextAlign { Left, Center, Right }
-    public enum NumberStyle { Number, Percentage, PercentageMul100, Currency }
+    public enum NumberStyle { None, Number, Percentage, PercentageMul100, Currency }
     
     public abstract class ColumnInfo
     {
@@ -28,9 +45,24 @@ namespace TextRenderZ.Reporting
         public string Suffix { get; set; } // May be overridden per cell
         
         public IReadOnlyDictionary<string, string> Attributes { get; set; }
+        
+        public List<ICellAdapter> Adapters { get; set; }
+
+        public ColumnInfo Add(ICellAdapter adapter)
+        {
+            Adapters ??= new List<ICellAdapter>();
+            Adapters.Add(adapter);
+            return this;
+        }
 
         public abstract object GetCellValue(object? container);
 
+        public ColumnInfo AsPercentage()
+        {
+            Suffix = " %";
+            IsNumber = NumberStyle.Percentage;
+            return this;
+        }
     }
 
     public class CellInfo
@@ -38,10 +70,12 @@ namespace TextRenderZ.Reporting
         public string Id    { get; set; }
         public string Class { get; set; }
         
+        public NumberStyle IsNumber { get; set; }
         public bool IsErr { get; set; }    // Number NaN, etc (not exception info)
         public bool IsNeg { get; set; } // Number NaN, etc (not exception info)
         public string Prefix { get; set; } // May be overridden per cell
         public string Suffix { get; set; } // May be overridden per cell
+        public string ToolTip { get; set; }
         
         public IReadOnlyDictionary<string, string> Attributes { get; set; }
     }

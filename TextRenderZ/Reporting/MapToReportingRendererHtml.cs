@@ -6,8 +6,18 @@ namespace TextRenderZ.Reporting
     public class MapToReportingRendererHtml : IMapToReportingRenderer
     {
         public string TableClass { get; set; } = "table table-sm";
-        public ICellFormatter CellFormatter { get; set; }
-        
+        public ICellFormatter? CellFormatter { get; set; }
+
+        public MapToReportingRendererHtml()
+        {
+            
+        }
+
+        public MapToReportingRendererHtml(ICellFormatter cellFormatter)
+        {
+            CellFormatter = cellFormatter;
+        }
+
         public void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, TextWriter outp)
         {
             if (CellFormatter == null)

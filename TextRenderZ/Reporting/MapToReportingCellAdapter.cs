@@ -13,13 +13,23 @@ namespace TextRenderZ.Reporting
                 col.IsNumber = NumberStyle.Number;
                 return;
             }
+            if (col.TargetType == typeof(double))
+            {
+                col.TextAlign = TextAlign.Right;
+                col.IsNumber  = NumberStyle.Number;
+                return;
+            }
         }
         
-        public Cell ConvertToCell(ColumnInfo col, object value)
+        public virtual Cell ConvertToCell(ColumnInfo col, object value)
         {
             if (value is Cell c) return c; // Passthrough 
             var cell = new Cell(col, null, value);
+            cell.IsNull = value == null;
             Enrich(cell);
+            
+            
+            
             return cell;
         }
 

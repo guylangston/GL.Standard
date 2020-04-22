@@ -1,109 +1,118 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace TextRenderZ.Reporting
 {
-    public class CellContainerTag
+    public struct CellContainerTag
     {
-        public CellContainerTag()
-        {
-        }
-
-        public CellContainerTag(string tagName, string id, string @class)
+        public CellContainerTag(string tagName, string? id, string? @class)
         {
             TagName = tagName;
             Id = id;
-            Class = @class;
+            ClassAttr = @class;
+            Attributes = null;
         }
 
         public string TagName { get; set; }
-        public string Id    { get; set; }
-        public string Class { get; set; }
+        public string? Id    { get; set; }
+        public string? ClassAttr { get; set; }
+
+        public void AddClass(string classIdent)
+        {
+            classIdent = classIdent.ToLowerInvariant();
+            if (ClassAttr != null && ClassAttr.Contains(classIdent)) return;
+            ClassAttr = ClassAttr == null
+                ? classIdent
+                : ClassAttr + " " + classIdent;
+        }
+        
+        public IReadOnlyDictionary<string, string>? Attributes { get; set; }
     }
     
     public interface ICellFormatter
     {
-        void WriteCell<T>(TextWriter tw, T input, CellContainerTag cell);
+        void WriteCell<T>(TextWriter tw, T input, CellContainerTag tag);
     }
 
     public class CellFormatter : ICellFormatter
     {
-        
         public string NullToken { get; set; } = "~";
-        public string StringFormatNumber = "{0:#,##0.0000}";
 
-        public virtual string GetTitle<T>(T item, CellContainerTag cell)
+        public void WriteCell(TextWriter tw, Cell inputValue, CellContainerTag tag)
         {
-            return item.ToString();
-        }
-        
-        public void WriteCell<T>(TextWriter tw, T input, CellContainerTag cell)
-        {
-            var itemType = typeof(T) == typeof(object) ? input?.GetType() : typeof(T);
+            MapToTag(inputValue, ref tag);
             
-            object data = input;
-            if (input is Cell itemCell)
-            {
-                itemType = itemCell.ValueInput?.GetType() ?? itemType;
-                data = itemCell.ValueDisplay;
-            }
-
-            bool isNum = IsNumberType(itemType);
-            bool isNull = IsNull(data);
             
-            tw.Write($"<{cell.TagName}");
-            if (cell.Id != null)
+            tw.Write($"<{tag.TagName}");
+            if (tag.Id != null)
             {
-                tw.Write($" id='{cell.Id}'");
+                tw.Write($" id='{tag.Id}'");
             }
             
-            tw.Write($" class='{cell.Class}");
-            if (isNull) tw.Write(" null");
-            if (isNum) tw.Write(" num");
-            if (isNum && IsNumberNegative(data)) tw.Write(" num-neg");
-            tw.Write("'");
+            tw.Write($" class='{tag.ClassAttr}'");
+            if (inputValue.CellInfo?.ToolTip != null)
+            {
+                tw.Write($" title='{inputValue.CellInfo.ToolTip}'");
+            }
 
-            var title = GetTitle(input, cell);
-            if (title != null) tw.Write($" title='{title}'");
-            
+            if (inputValue.CellInfo?.Attributes != null)
+            {
+                foreach (var pair in inputValue.CellInfo?.Attributes )
+                {
+                    tw.Write($" {pair.Key}='{pair.Value}'");    
+                }
+            }
             tw.Write(">");
-
-            
-            if (isNull)
+            if (inputValue.IsNull)
             {
                 tw.Write(NullToken);
             }
-            else if (isNum)
+            else
             {
-                tw.Write(string.Format(StringFormatNumber, data));
+                var px = inputValue.CellInfo?.Prefix ?? inputValue.Column.Prefix;
+                if (px != null) tw.Write(px);
+                tw.Write(inputValue.ValueDisplay);
+                
+                var sx =  inputValue.CellInfo?.Suffix ?? inputValue.Column.Suffix;
+                if (sx != null) tw.Write(sx);
+            }
+            tw.WriteLine($"</{tag.TagName}>");
+        }
+
+        private void MapToTag(Cell inputValue, ref CellContainerTag tag)
+        {
+            if (inputValue.CellInfo != null)
+            {
+                // Do these first, the override later
+                tag.Id        = inputValue.CellInfo.Id;
+                tag.ClassAttr = inputValue.CellInfo.Class;
+            }
+
+            if (inputValue.IsNull) tag.AddClass("null");
+            if (inputValue.Column.IsNumber != NumberStyle.None) tag.AddClass("num");
+            if (inputValue.Column.IsNumber == NumberStyle.Percentage) tag.AddClass("num-pct");
+            if (inputValue.CellInfo != null)
+            {
+                if (inputValue.CellInfo.IsNumber != NumberStyle.None) tag.AddClass("num");
+                if (inputValue.CellInfo.IsNumber == NumberStyle.Percentage) tag.AddClass("num-pct");
+                if (inputValue.CellInfo.IsErr)  tag.AddClass("err");
+                if (inputValue.CellInfo.IsNeg)  tag.AddClass("num-neg");
+            }
+        }
+
+        public void WriteCell<T>(TextWriter tw, T input, CellContainerTag tag)
+        {
+            if (input is Cell inputCell)
+            {
+                WriteCell(tw, inputCell, tag);
             }
             else
             {
-                tw.Write(data?.ToString());
+                throw new NotImplementedException();
             }
-            tw.WriteLine($"</{cell.TagName}>");
+            
         }
-        
-        private bool IsNull(object item)
-        {
-            if (item == null) return true;
-            if (item is double dd && double.IsNaN(dd)) return true;
-            if (item is decimal dc && decimal.MinValue == dc) return true;
-            return false;
-        }
-
-        private bool IsNumberNegative(object item)
-        {
-            if (item is double dd && dd < 0) return true;  
-            if (item is int ii && ii < 0) return true;
-            if (item is decimal dc && dc < 0) return true;
-            return false;
-        }
-
-        private bool IsNumberType(Type type) => 
-            type == typeof(double) 
-            || type == typeof(int) 
-            || type == typeof(decimal);
+       
     }
 }
