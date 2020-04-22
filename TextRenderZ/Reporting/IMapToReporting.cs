@@ -22,7 +22,7 @@ namespace TextRenderZ.Reporting
         public void Adapt(Cell cell) => func(cell);
     }
     
-    public enum TextAlign { Left, Center, Right }
+    public enum TextAlign { None, Left, Center, Right }
     public enum NumberStyle { None, Number, Percentage, PercentageMul100, Currency }
     
     public abstract class ColumnInfo
@@ -68,7 +68,7 @@ namespace TextRenderZ.Reporting
     public class CellInfo
     {
         public string Id    { get; set; }
-        public string Class { get; set; }
+        public string ClassAttr { get; set; }
         
         public NumberStyle IsNumber { get; set; }
         public bool IsErr { get; set; }    // Number NaN, etc (not exception info)
@@ -76,22 +76,41 @@ namespace TextRenderZ.Reporting
         public string Prefix { get; set; } // May be overridden per cell
         public string Suffix { get; set; } // May be overridden per cell
         public string ToolTip { get; set; }
+        public string Url { get; set; }
+        public string UrlClass { get; set; }
         
-        public IReadOnlyDictionary<string, string> Attributes { get; set; }
+        public void AddClass(string classIdent)
+        {
+            classIdent = classIdent.ToLowerInvariant();
+            if (ClassAttr != null && ClassAttr.Contains(classIdent)) return;
+            ClassAttr = ClassAttr == null
+                ? classIdent
+                : ClassAttr + " " + classIdent;
+        }
+        
+        public Dictionary<string, string> Attributes { get; set; }
+        
+        public void AddAttr(string name, string val)
+        {
+            Attributes ??= new Dictionary<string, string>();
+            Attributes[name] = val;
+        }
     }
     
     public sealed class Cell
     {
-        public Cell(ColumnInfo colInfo,  CellInfo? cellInfo, object? valueInput)
+        public Cell(ColumnInfo colInfo,  CellInfo? cellInfo, object? valueInput, object containerValue)
         {
             Column = colInfo;
             CellInfo = cellInfo;
             ValueInput = valueInput;
+            ValueContainer = containerValue;
         }
 
         public ColumnInfo Column { get;  }
         public CellInfo? CellInfo { get; set; }
 
+        public object? ValueContainer { get; set; }
         public object? ValueInput { get; set; }
         public object? ValueDisplay { get; set; }
         
@@ -101,6 +120,15 @@ namespace TextRenderZ.Reporting
         public object? GetValue() => ValueDisplay ?? ValueInput;  
         public string? GetValueString() => GetValue()?.ToString();
         public override string ToString() => GetValueString();
+
+        public CellInfo Info
+        {
+            get
+            {
+                if (CellInfo == null) CellInfo = new CellInfo();
+                return CellInfo;
+            }
+        }
     }
     
     /// <summary>

@@ -21,15 +21,13 @@ namespace TextRenderZ.Reporting
             }
         }
         
-        public virtual Cell ConvertToCell(ColumnInfo col, object value)
+        public virtual Cell ConvertToCell(ColumnInfo col, object value, object container)
         {
             if (value is Cell c) return c; // Passthrough 
-            var cell = new Cell(col, null, value);
+            var cell = new Cell(col, null, value, container);
             cell.IsNull = value == null;
             Enrich(cell);
-            
-            
-            
+
             return cell;
         }
 
@@ -81,9 +79,9 @@ namespace TextRenderZ.Reporting
                    + (cell.CellInfo?.Suffix ?? cell.Column.Suffix ?? "");
         }
 
-        public Cell ConvertToCell(ColumnInfo col, Exception error)
+        public Cell ConvertToCell(ColumnInfo col, Exception error, object container)
         {
-            var cell = new Cell(col, null, null);
+            var cell = new Cell(col, null, null, container);
             cell.Error = error;
             cell.IsNull = true;
             return cell;

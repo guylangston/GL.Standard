@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace TextRenderZ.Reporting
 {
@@ -27,7 +28,7 @@ namespace TextRenderZ.Reporting
                 : ClassAttr + " " + classIdent;
         }
         
-        public IReadOnlyDictionary<string, string>? Attributes { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
     }
     
     public interface ICellFormatter
@@ -38,6 +39,7 @@ namespace TextRenderZ.Reporting
     public class CellFormatter : ICellFormatter
     {
         public string NullToken { get; set; } = "~";
+        public string ErrorToken { get; set; } = "#ERR#";
 
         public void WriteCell(TextWriter tw, Cell inputValue, CellContainerTag tag)
         {
@@ -63,12 +65,28 @@ namespace TextRenderZ.Reporting
                     tw.Write($" {pair.Key}='{pair.Value}'");    
                 }
             }
+            if (tag.Attributes != null)
+            {
+                foreach (var pair in tag.Attributes)
+                {
+                    tw.Write($" {pair.Key}='{pair.Value}'");    
+                }
+            }
             tw.Write(">");
-            if (inputValue.IsNull)
+            if (inputValue.CellInfo?.Url != null)
+            {
+                tw.Write($"<a href='{inputValue.CellInfo?.Url}' class='{inputValue.CellInfo?.UrlClass}'>");    
+            }
+
+            if (inputValue.Error != null)
+            {
+                tw.Write(ErrorToken);
+            }
+            else if (inputValue.IsNull)
             {
                 tw.Write(NullToken);
             }
-            else
+            else 
             {
                 var px = inputValue.CellInfo?.Prefix ?? inputValue.Column.Prefix;
                 if (px != null) tw.Write(px);
@@ -77,8 +95,14 @@ namespace TextRenderZ.Reporting
                 var sx =  inputValue.CellInfo?.Suffix ?? inputValue.Column.Suffix;
                 if (sx != null) tw.Write(sx);
             }
+            if (inputValue.CellInfo?.Url != null)
+            {
+                tw.Write($"</a>");    
+            }
             tw.WriteLine($"</{tag.TagName}>");
         }
+
+        
 
         private void MapToTag(Cell inputValue, ref CellContainerTag tag)
         {
@@ -86,8 +110,20 @@ namespace TextRenderZ.Reporting
             {
                 // Do these first, the override later
                 tag.Id        = inputValue.CellInfo.Id;
-                tag.ClassAttr = inputValue.CellInfo.Class;
+                tag.ClassAttr = inputValue.CellInfo.ClassAttr;
             }
+
+            if (inputValue.Error != null || inputValue.CellInfo?.IsErr == true)
+            {
+                tag.AddClass("err");
+                if (inputValue.Error != null)
+                {
+                    tag.Attributes ??= new Dictionary<string, string>();
+                    tag.Attributes["data-error"] = StringUtil.Elipse(inputValue.Error.Message, 80);
+                }
+            }
+            
+            if (inputValue.Column.TextAlign != TextAlign.None) tag.AddClass($"align-{inputValue.Column.TextAlign.ToString().ToLowerInvariant()}");
 
             if (inputValue.IsNull) tag.AddClass("null");
             if (inputValue.Column.IsNumber != NumberStyle.None) tag.AddClass("num");

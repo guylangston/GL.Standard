@@ -20,8 +20,8 @@ namespace TextRenderZ.Reporting
 
     public interface IMapToReportingCellAdapter
     {
-        Cell ConvertToCell(ColumnInfo col, object value);
-        Cell ConvertToCell(ColumnInfo col, Exception error);
+        Cell ConvertToCell(ColumnInfo col, object value, object container);
+        Cell ConvertToCell(ColumnInfo col, Exception error, object container);
     }
     
     
@@ -133,7 +133,7 @@ namespace TextRenderZ.Reporting
                 try
                 {
                     var obj = col.GetCellValue(data);
-                    var c =  owner.CellAdapter.ConvertToCell(col, obj);
+                    var c =  owner.CellAdapter.ConvertToCell(col, obj, data);
                     if (col.Adapters != null) 
                     {
                         foreach (var adapter in col.Adapters)
@@ -146,7 +146,7 @@ namespace TextRenderZ.Reporting
                 }
                 catch (Exception e)
                 {
-                    return owner.CellAdapter.ConvertToCell(col, e);
+                    return owner.CellAdapter.ConvertToCell(col, e, data);
                 }
             }
 
