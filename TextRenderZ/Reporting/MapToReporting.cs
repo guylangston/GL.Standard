@@ -20,10 +20,41 @@ namespace TextRenderZ.Reporting
 
     public interface IMapToReportingCellAdapter
     {
+        void Enrich(ColumnInfo col);
+        void Enrich(Cell cell);
         Cell ConvertToCell(ColumnInfo col, object value, object container);
         Cell ConvertToCell(ColumnInfo col, Exception error, object container);
     }
     
+    
+    public class ColumnInfoFunc : ColumnInfo
+    {
+        private Func<object?, object?> func;
+
+        public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
+            : base(targetType, containerType, title)
+        {
+                
+            this.func = getValue;
+        }
+
+        public override object GetCellValue(object container) => func(container);
+    }
+    
+    
+    public class ColumnInfoPropertyInfo : ColumnInfo
+    {
+        public ColumnInfoPropertyInfo(PropertyInfo info, Type containerType, string title) 
+            : base(info.PropertyType, containerType, title)
+        {
+            PropertyInfo = info; 
+        }
+            
+            
+        public PropertyInfo PropertyInfo { get; }
+            
+        public override object GetCellValue(object container) => PropertyInfo.GetValue(container);
+    }
     
 
     public class MapToReporting<T> : IMapToReporting<T>
@@ -70,43 +101,9 @@ namespace TextRenderZ.Reporting
         }
         public MapToReporting<T> AddColumn(string propName) => AddColumn(null, props.First(x => x.Name == propName), null);
         
-        class ColumnInfoFunc : ColumnInfo
-        {
-            private Func<object?, object?> func;
-
-            public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
-                : base(targetType, containerType, title)
-            {
-                
-                this.func = getValue;
-            }
-
-            public override object GetCellValue(object container)
-            {
-                return func(container);
-            }
-
-            
-        }
+       
         
 
-        class ColumnInfoPropertyInfo : ColumnInfo
-        {
-            public ColumnInfoPropertyInfo(PropertyInfo info, Type containerType, string title) 
-                : base(info.PropertyType, containerType, title)
-            {
-                PropertyInfo = info; 
-            }
-            
-            
-            public PropertyInfo PropertyInfo { get; }
-            
-            public override object GetCellValue(object container)
-            {
-                return PropertyInfo.GetValue(container);
-            }
-            
-        }
 
         class MapToRow : IMapToRow<T>
         {

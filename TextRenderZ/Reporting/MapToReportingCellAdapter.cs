@@ -5,7 +5,7 @@ namespace TextRenderZ.Reporting
     public class MapToReportingCellAdapter : IMapToReportingCellAdapter
     {
 
-        protected virtual void Enrich(ColumnInfo col)
+        public virtual void Enrich(ColumnInfo col)
         {
             if (col.TargetType == typeof(decimal))
             {
@@ -31,7 +31,7 @@ namespace TextRenderZ.Reporting
             return cell;
         }
 
-        protected virtual void Enrich(Cell cell)
+        public virtual void Enrich(Cell cell)
         {
             if (cell.ValueInput is double valueDouble)
             {

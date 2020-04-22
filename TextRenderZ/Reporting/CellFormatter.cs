@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.WebSockets;
 using System.Security.Cryptography;
 
 namespace TextRenderZ.Reporting
@@ -33,7 +34,7 @@ namespace TextRenderZ.Reporting
     
     public interface ICellFormatter
     {
-        void WriteCell<T>(TextWriter tw, T input, CellContainerTag tag);
+        void WriteCell(TextWriter tw, Cell input, ref CellContainerTag tag);
     }
 
     public class CellFormatter : ICellFormatter
@@ -41,18 +42,21 @@ namespace TextRenderZ.Reporting
         public string NullToken { get; set; } = "~";
         public string ErrorToken { get; set; } = "#ERR#";
 
-        public void WriteCell(TextWriter tw, Cell inputValue, CellContainerTag tag)
+        public void WriteCell(TextWriter tw, Cell inputValue, ref CellContainerTag tag)
         {
             MapToTag(inputValue, ref tag);
-            
             
             tw.Write($"<{tag.TagName}");
             if (tag.Id != null)
             {
                 tw.Write($" id='{tag.Id}'");
             }
+
+            if (tag.ClassAttr != null)
+            {
+                tw.Write($" class='{tag.ClassAttr}'");    
+            }
             
-            tw.Write($" class='{tag.ClassAttr}'");
             if (inputValue.CellInfo?.ToolTip != null)
             {
                 tw.Write($" title='{inputValue.CellInfo.ToolTip}'");
@@ -137,18 +141,7 @@ namespace TextRenderZ.Reporting
             }
         }
 
-        public void WriteCell<T>(TextWriter tw, T input, CellContainerTag tag)
-        {
-            if (input is Cell inputCell)
-            {
-                WriteCell(tw, inputCell, tag);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-            
-        }
+     
        
     }
 }
