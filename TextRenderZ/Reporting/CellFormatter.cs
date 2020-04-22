@@ -1,15 +1,16 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace TextRenderZ.Reporting
 {
-      public class CellContainer
+    public class CellContainerTag
     {
-        public CellContainer()
+        public CellContainerTag()
         {
         }
 
-        public CellContainer(string tagName, string id, string @class)
+        public CellContainerTag(string tagName, string id, string @class)
         {
             TagName = tagName;
             Id = id;
@@ -17,13 +18,13 @@ namespace TextRenderZ.Reporting
         }
 
         public string TagName { get; set; }
-        public string Id { get; set; }
+        public string Id    { get; set; }
         public string Class { get; set; }
     }
     
     public interface ICellFormatter
     {
-        void WriteCell<T>(TextWriter tw, T item, CellContainer cell);
+        void WriteCell<T>(TextWriter tw, T input, CellContainerTag cell);
     }
 
     public class CellFormatter : ICellFormatter
@@ -32,16 +33,24 @@ namespace TextRenderZ.Reporting
         public string NullToken { get; set; } = "~";
         public string StringFormatNumber = "{0:#,##0.0000}";
 
-        public virtual string GetTitle<T>(T item, CellContainer cell)
+        public virtual string GetTitle<T>(T item, CellContainerTag cell)
         {
             return item.ToString();
         }
         
-        public void WriteCell<T>(TextWriter tw, T item, CellContainer cell)
+        public void WriteCell<T>(TextWriter tw, T input, CellContainerTag cell)
         {
-            var itemType = typeof(T) == typeof(object) ? item?.GetType() : typeof(T);
+            var itemType = typeof(T) == typeof(object) ? input?.GetType() : typeof(T);
+            
+            object data = input;
+            if (input is Cell itemCell)
+            {
+                itemType = itemCell.ValueInput?.GetType() ?? itemType;
+                data = itemCell.ValueDisplay;
+            }
+
             bool isNum = IsNumberType(itemType);
-            bool isNull = IsNull(item);
+            bool isNull = IsNull(data);
             
             tw.Write($"<{cell.TagName}");
             if (cell.Id != null)
@@ -52,25 +61,26 @@ namespace TextRenderZ.Reporting
             tw.Write($" class='{cell.Class}");
             if (isNull) tw.Write(" null");
             if (isNum) tw.Write(" num");
-            if (isNum && IsNumberNegative(item)) tw.Write(" num-neg");
+            if (isNum && IsNumberNegative(data)) tw.Write(" num-neg");
             tw.Write("'");
 
-            var title = GetTitle(item, cell);
+            var title = GetTitle(input, cell);
             if (title != null) tw.Write($" title='{title}'");
             
             tw.Write(">");
 
+            
             if (isNull)
             {
                 tw.Write(NullToken);
             }
             else if (isNum)
             {
-                tw.Write(string.Format(StringFormatNumber, item));
+                tw.Write(string.Format(StringFormatNumber, data));
             }
             else
             {
-                tw.Write(item?.ToString());
+                tw.Write(data?.ToString());
             }
             tw.WriteLine($"</{cell.TagName}>");
         }

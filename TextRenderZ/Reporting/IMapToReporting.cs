@@ -6,43 +6,67 @@ using System.Text;
 namespace TextRenderZ.Reporting
 {
     public enum TextAlign { Left, Center, Right }
+    public enum NumberStyle { Number, Percentage, PercentageMul100, Currency }
     
-    public class CellStyle
+    public abstract class ColumnInfo
     {
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public TextAlign TextAlign { get; set; }
-        
-    }
-    
-    public class Cell
-    {
-        public object? Value { get; set; }
-        public object? ValueDisplay { get; set; }        // Check for ICellValue for more complex rules
-        public CellStyle? Style { get; set; }
-        public Exception? Error { get; set; }
-
-        public object? GetValue() => ValueDisplay ?? Value;  
-        public string? GetValueString() => GetValue()?.ToString();
-    }
-
-    public interface ICellValue
-    {
-        public Cell Cell { get;  }
-    }
-
-    public class SuffixPrefixCell : ICellValue
-    {
-        public SuffixPrefixCell(string prefix, string suffix, Cell cell)
+        public ColumnInfo(Type targetType, Type containerType, string title)
         {
-            Prefix = prefix;
-            Suffix = suffix;
-            Cell = cell;
+            TargetType = targetType;
+            ContainerType = containerType;
+            Title = title;
         }
 
-        public string? Prefix { get;  }
-        public string? Suffix { get;  }
-        public Cell Cell { get;  }
+        public Type TargetType    { get;  }
+        public Type ContainerType { get; }
+        
+        public string Title { get; }
+        public string? Description { get; set; }
+        public TextAlign TextAlign { get; set; }
+        public NumberStyle IsNumber { get; set; }
+        public string Prefix { get; set; } // May be overridden per cell
+        public string Suffix { get; set; } // May be overridden per cell
+        
+        public IReadOnlyDictionary<string, string> Attributes { get; set; }
+
+        public abstract object GetCellValue(object? container);
+
+    }
+
+    public class CellInfo
+    {
+        public string Id    { get; set; }
+        public string Class { get; set; }
+        
+        public bool IsErr { get; set; }    // Number NaN, etc (not exception info)
+        public bool IsNeg { get; set; } // Number NaN, etc (not exception info)
+        public string Prefix { get; set; } // May be overridden per cell
+        public string Suffix { get; set; } // May be overridden per cell
+        
+        public IReadOnlyDictionary<string, string> Attributes { get; set; }
+    }
+    
+    public sealed class Cell
+    {
+        public Cell(ColumnInfo colInfo,  CellInfo? cellInfo, object? valueInput)
+        {
+            Column = colInfo;
+            CellInfo = cellInfo;
+            ValueInput = valueInput;
+        }
+
+        public ColumnInfo Column { get;  }
+        public CellInfo? CellInfo { get; set; }
+
+        public object? ValueInput { get; set; }
+        public object? ValueDisplay { get; set; }
+        
+        public Exception? Error { get; set; }
+        public bool IsNull { get; set; }
+
+        public object? GetValue() => ValueDisplay ?? ValueInput;  
+        public string? GetValueString() => GetValue()?.ToString();
+        public override string ToString() => GetValueString();
     }
     
     /// <summary>
@@ -50,7 +74,7 @@ namespace TextRenderZ.Reporting
     /// </summary>
     public interface IMapToReporting<T> 
     {
-        public IReadOnlyList<CellStyle> Columns { get;  }
+        public IReadOnlyList<ColumnInfo> Columns { get;  }
         public IEnumerable<IMapToRow<T>> GetRows(IEnumerable<T> items);
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp);
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, StringBuilder sb);

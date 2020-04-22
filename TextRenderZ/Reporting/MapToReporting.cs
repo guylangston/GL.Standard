@@ -13,10 +13,16 @@ namespace TextRenderZ.Reporting
     {
         public static MapToReporting<T>  Create<T>() => new MapToReporting<T>();
     }
-    
+
+    public interface IMapToReportingCellAdapter
+    {
+        Cell ConvertToCell(ColumnInfo col, object value);
+        Cell ConvertToCell(ColumnInfo col, Exception error);
+    }
+
     public class MapToReporting<T> : IMapToReporting<T>
     {
-        List<PropToColumn> columns = new List<PropToColumn>();
+        private readonly List<ColumnInfo> columns = new List<ColumnInfo>();
         private PropertyInfo[] props;
 
         public MapToReporting()
@@ -24,84 +30,64 @@ namespace TextRenderZ.Reporting
             this.props = typeof(T).GetProperties();
         }
 
+        public IMapToReportingCellAdapter CellAdapter { get; set; }
+
         public MapToReporting<T> AddColumn<TP>(Expression<Func<T, TP>> exp)
         {
             throw new NotImplementedException();
         }
 
-        
         public MapToReporting<T> AddColumn<TP>(string title, Func<T, TP> getVal)
         {
-            var p = new PropToColumn(typeof(TP), title);
-            p.GetCell = o => CellFactory(p, o);
-            columns.Add(p);
-            
-            Cell CellFactory(PropToColumn propToColumn, object? o) =>
-                AdaptForDisplay(new Cell()
-                {
-                    Style = propToColumn,
-                    Value = getVal((T)o)
-                });
+#pragma warning disable 8605
+            columns.Add(new ColumnInfoFunc(typeof(TP), typeof(T), title, o => (object?)getVal((T) o)));
+#pragma warning restore 8605
             return this;
         }
         
         public MapToReporting<T> AddColumn(string propName) => AddColumn(props.First(x => x.Name == propName));
         public MapToReporting<T> AddColumn(PropertyInfo info)
         {
-            var p = new PropToColumn(info.PropertyType, info.Name)
-            {
-                PropertyInfo = info
-            };
-            p.GetCell = o => CellFactory(p, o);
-            columns.Add(p);
-            
-            Cell CellFactory(PropToColumn propToColumn, object? o) =>
-                AdaptForDisplay(new Cell()
-                {
-                    Style = propToColumn,
-                    Value = propToColumn.PropertyInfo!.GetValue(o)
-                });
+            columns.Add(new ColumnInfoPropertyInfo(info, typeof(T), info.Name));
             return this;
         }
         
-
-        private Cell AdaptForDisplay(Cell cell)
+        class ColumnInfoFunc : ColumnInfo
         {
-            cell.ValueDisplay = cell.Value;
-            if (cell.Style is PropToColumn col)
-            {
-                if (col.StringFormat != null)
-                {
-                    cell.ValueDisplay = string.Format("{0:" + col.StringFormat + "}", cell.Value); // TODO: Messy, there must be a cleaner way...
-                }
-            }
-            return cell;
-        }
+            private Func<object?, object?> func;
 
-        class PropToColumn : CellStyle
-        {
-            public PropToColumn(Type valueType, string title)
+            public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
+                : base(targetType, containerType, title)
             {
-                base.Title = title;
-                ValueType = valueType;
-
-                if (ValueType == typeof(double) || ValueType == typeof(decimal) || ValueType == typeof(float))
-                {
-                    TextAlign    = TextAlign.Right;
-                    StringFormat = "#,##0.00";
-                }
-                else if (ValueType == typeof(int) || ValueType == typeof(long))
-                {
-                    TextAlign    = TextAlign.Right;
-                    StringFormat = "#,##0";
-                }
+                
+                this.func = getValue;
             }
 
-            public Type ValueType { get;  }
-            public Func<object?, Cell>? GetCell { get; set; }
+            public override object GetCellValue(object container)
+            {
+                return func(container);
+            }
+
             
-            public PropertyInfo? PropertyInfo { get; set; }
-            public string?  StringFormat { get; set; }
+        }
+        
+
+        class ColumnInfoPropertyInfo : ColumnInfo
+        {
+            public ColumnInfoPropertyInfo(PropertyInfo info, Type containerType, string title) 
+                : base(info.PropertyType, containerType, title)
+            {
+                PropertyInfo = info; 
+            }
+            
+            
+            public PropertyInfo PropertyInfo { get; }
+            
+            public override object GetCellValue(object container)
+            {
+                return PropertyInfo.GetValue(container);
+            }
+            
         }
 
         class MapToRow : IMapToRow<T>
@@ -124,20 +110,16 @@ namespace TextRenderZ.Reporting
                 }
             }
 
-            private Cell GetCell(PropToColumn col, T data)
+            private Cell GetCell(ColumnInfo col, T data)
             {
                 try
                 {
-                    return col.GetCell(data);
+                    var obj = col.GetCellValue(data);
+                    return owner.CellAdapter.ConvertToCell(col, obj);
                 }
                 catch (Exception e)
                 {
-                    return new Cell()
-                    {
-                        Style = col,
-                        Error = e,
-                        Value = "!ERR!"
-                    };
+                    return owner.CellAdapter.ConvertToCell(col, e);
                 }
             }
 
@@ -145,7 +127,7 @@ namespace TextRenderZ.Reporting
         }
 
 
-        public IReadOnlyList<CellStyle> Columns => columns;
+        public IReadOnlyList<ColumnInfo> Columns => columns;
         public IEnumerable<IMapToRow<T>> GetRows(IEnumerable<T> items)
         {
             foreach (var item in items)

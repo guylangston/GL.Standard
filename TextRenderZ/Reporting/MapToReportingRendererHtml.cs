@@ -51,7 +51,7 @@ namespace TextRenderZ.Reporting
             
                     foreach (var cell in item)
                     {
-                        CellFormatter.WriteCell(outp, cell, new CellContainer("td", null, null));
+                        CellFormatter.WriteCell(outp, cell, new CellContainerTag("td", null, null));
                     }
                     outp.WriteLine("</tr>");
                 }
