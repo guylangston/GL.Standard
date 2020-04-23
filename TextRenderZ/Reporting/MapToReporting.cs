@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using TextRenderZ.Reporting.Adapters;
 
 namespace TextRenderZ.Reporting
 {
@@ -30,6 +31,9 @@ namespace TextRenderZ.Reporting
     public class ColumnInfoFunc : ColumnInfo
     {
         private Func<object?, object?> func;
+        
+        public static ColumnInfoFunc Create<T, TP>(string title, Func<T, TP> getValue) 
+            => new ColumnInfoFunc(typeof(T), typeof(TP), title, x => (object)getValue((T)x));
 
         public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
             : base(targetType, containerType, title)
@@ -56,6 +60,30 @@ namespace TextRenderZ.Reporting
         public override object GetCellValue(object container) => PropertyInfo.GetValue(container);
     }
     
+    public class FluentColumn<T>
+    {
+        public FluentColumn(ColumnInfo columnInfo)
+        {
+            ColumnInfo = columnInfo;
+        }
+
+        public ColumnInfo ColumnInfo { get; set; }
+
+        public FluentColumn<T> Add(ICellAdapter adapter)
+        {
+            ColumnInfo.Add(adapter);
+            return this;
+        }
+        
+        public FluentColumn<T> Link(CellLink<T> link)
+        {
+            ColumnInfo.Add(link);
+            return this;
+        }
+        
+        public FluentColumn<T> Link(Func<Cell, T, string> getUrl) => Link(new CellLink<T>(getUrl));
+    }
+    
 
     public class MapToReporting<T> : IMapToReporting<T>
     {
@@ -73,18 +101,29 @@ namespace TextRenderZ.Reporting
         
 
         public IMapToReportingCellAdapter CellAdapter { get; set; }
+        
+        public MapToReporting<T> AddColumn(ColumnInfo manual)
+        {
+            columns.Add(manual);
+            return this;
+        }
+        public MapToReporting<T> AddColumns(IEnumerable<ColumnInfo> cols)
+        {
+            columns.AddRange(cols);
+            return this;
+        }
 
         public MapToReporting<T> AddColumn<TP>(Expression<Func<T, TP>> exp)
         {
             throw new NotImplementedException();
         }
 
-        public MapToReporting<T> AddColumn<TP>(string title, Func<T, TP> getVal, Action<ColumnInfo>? setupCol = null)
+        public MapToReporting<T> AddColumn<TP>(string title, Func<T, TP> getVal, Action<FluentColumn<T>>? setupCol = null)
         {
 #pragma warning disable 8605
             var columnInfoFunc = new ColumnInfoFunc(typeof(TP), typeof(T), title, o => (object?)getVal((T) o));
 #pragma warning restore 8605
-            if (setupCol != null) setupCol(columnInfoFunc);
+            if (setupCol != null) setupCol(new FluentColumn<T>(columnInfoFunc));
             columns.Add(columnInfoFunc);
 
             
@@ -92,13 +131,14 @@ namespace TextRenderZ.Reporting
         }
         
         
-        public MapToReporting<T> AddColumn(string? title, PropertyInfo info, Action<ColumnInfo> setupCol = null)
+        public MapToReporting<T> AddColumn(string? title, PropertyInfo info, Action<FluentColumn<T>>? setupCol = null)
         {
             var columnInfoPropertyInfo = new ColumnInfoPropertyInfo(info, typeof(T), title ?? info.Name);
             columns.Add(columnInfoPropertyInfo);
-            if (setupCol != null) setupCol(columnInfoPropertyInfo);
+            if (setupCol != null) setupCol(new FluentColumn<T>(columnInfoPropertyInfo));
             return this;
         }
+        
         public MapToReporting<T> AddColumn(string propName) => AddColumn(null, props.First(x => x.Name == propName), null);
         
        
