@@ -88,11 +88,13 @@ namespace TextRenderZ.Reporting
     public class MapToReporting<T> : IMapToReporting<T>
     {
         private readonly List<ColumnInfo> columns = new List<ColumnInfo>();
-        private PropertyInfo[] props;
+        private PropertyInfo[]? _props;
+        
+        private PropertyInfo[] props => _props ??= typeof(T).GetProperties();
+        
         
         public MapToReporting(IMapToReportingCellAdapter cellAdapter)
         {
-            this.props  = typeof(T).GetProperties();
             CellAdapter = cellAdapter;
         }
 
@@ -110,6 +112,15 @@ namespace TextRenderZ.Reporting
         public MapToReporting<T> AddColumns(IEnumerable<ColumnInfo> cols)
         {
             columns.AddRange(cols);
+            return this;
+        }
+        
+        public MapToReporting<T> AddColumns()
+        {
+            foreach (var propertyInfo in props)
+            {
+                AddColumn(StringUtil.UnCamel(propertyInfo.Name), propertyInfo);
+            }
             return this;
         }
 
@@ -199,6 +210,12 @@ namespace TextRenderZ.Reporting
                 yield return new MapToRow(this, item);
             }
         }
+        
+        public IMapToReporting<T> RenderTo(T item, IMapToReportingRendererSingle renderer, TextWriter outp )
+        {
+            renderer.Render(this, item, outp);
+            return this;
+        }
 
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp )
         {
@@ -215,12 +232,14 @@ namespace TextRenderZ.Reporting
             return this;
         }
 
-        public void CodeGen(TextWriter output)
+        public void CodeGen(TextWriter output, bool wrapHtml = true)
         {
+            if (wrapHtml) output.WriteLine("<pre class='code-cs'><code>");
             foreach (var prop in typeof(T).GetProperties())
             {
                 output.WriteLine($"\t.AddColumn(\"{prop.Name}\", x=>x.{prop.Name})");
             }
+            if (wrapHtml) output.WriteLine("</code></pre>");
         }
     }
 }

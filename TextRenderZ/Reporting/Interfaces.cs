@@ -41,6 +41,11 @@ namespace TextRenderZ.Reporting
         void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, TextWriter outp);
     }
     
+    public interface IMapToReportingRendererSingle
+    {
+        void Render<T>(IMapToReporting<T> mapping, T items, TextWriter outp);
+    }
+    
     public interface IMapToRow<T> : IEnumerable<Cell>
     {
         
