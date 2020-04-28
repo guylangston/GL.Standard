@@ -21,6 +21,7 @@ namespace TextRenderZ.Reporting
         public NumberStyle IsNumber    { get; set; }
         public string      Prefix      { get; set; } // May be overridden per cell
         public string      Suffix      { get; set; } // May be overridden per cell
+        public string      GroupTitle { get; set; }
         
         public IReadOnlyDictionary<string, string> Attributes { get; set; }
         
@@ -37,7 +38,7 @@ namespace TextRenderZ.Reporting
 
         public ColumnInfo AsPercentage()
         {
-            Suffix   = " %";
+            Suffix   = "%";
             IsNumber = NumberStyle.Percentage;
             return this;
         }

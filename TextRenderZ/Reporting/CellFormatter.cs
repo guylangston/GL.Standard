@@ -93,11 +93,23 @@ namespace TextRenderZ.Reporting
             else 
             {
                 var px = inputValue.CellInfo?.Prefix ?? inputValue.Column.Prefix;
-                if (px != null) tw.Write(px);
+                if (px != null)
+                {
+                    tw.Write("<span class='prefix'>");
+                    tw.Write(px);
+                    tw.Write("</span>");
+                }
+                
                 tw.Write(inputValue.ValueDisplay);
                 
                 var sx =  inputValue.CellInfo?.Suffix ?? inputValue.Column.Suffix;
-                if (sx != null) tw.Write(sx);
+                if (sx != null)
+                {
+                    tw.Write("<span class='suffix'>");
+                    tw.Write(sx);
+                    tw.Write("</span>");
+                    
+                }
             }
             if (inputValue.CellInfo?.Url != null)
             {

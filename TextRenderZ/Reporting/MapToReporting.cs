@@ -6,13 +6,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using TextRenderZ.Reporting.Adapters;
 
 namespace TextRenderZ.Reporting
 {
     public static class MapToReporting
     {
         public static MapToReporting<T> Create<T>(IEnumerable<T> _) => new MapToReporting<T>();
+        public static MapToReporting<T> Create<T>(IEnumerable<T> _, IMapToReportingCellAdapter adapter) => new MapToReporting<T>(adapter);
         public static MapToReporting<T>  Create<T>() => new MapToReporting<T>();
         
         public static MapToReporting<T> Create<T>(IMapToReportingCellAdapter adapter) => new MapToReporting<T>(adapter);
@@ -26,64 +26,19 @@ namespace TextRenderZ.Reporting
         Cell ConvertToCell(ColumnInfo col, object value, object container);
         Cell ConvertToCell(ColumnInfo col, Exception error, object container);
     }
-    
-    
-    public class ColumnInfoFunc : ColumnInfo
+
+    public enum CodeGenOutput
     {
-        private Func<object?, object?> func;
-        
-        public static ColumnInfoFunc Create<T, TP>(string title, Func<T, TP> getValue) 
-            => new ColumnInfoFunc(typeof(T), typeof(TP), title, x => (object)getValue((T)x));
-
-        public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
-            : base(targetType, containerType, title)
-        {
-                
-            this.func = getValue;
-        }
-
-        public override object GetCellValue(object container) => func(container);
+        Text,
+        CSharp,
+        Html
     }
-    
-    
-    public class ColumnInfoPropertyInfo : ColumnInfo
+
+    public interface IMapToReportingCodeGen<T>
     {
-        public ColumnInfoPropertyInfo(PropertyInfo info, Type containerType, string title) 
-            : base(info.PropertyType, containerType, title)
-        {
-            PropertyInfo = info; 
-        }
-            
-            
-        public PropertyInfo PropertyInfo { get; }
-            
-        public override object GetCellValue(object container) => PropertyInfo.GetValue(container);
+        CodeGenOutput Format { get;  }
+        void CodeGen(TextWriter output, IMapToReporting<T> report);
     }
-    
-    public class FluentColumn<T>
-    {
-        public FluentColumn(ColumnInfo columnInfo)
-        {
-            ColumnInfo = columnInfo;
-        }
-
-        public ColumnInfo ColumnInfo { get; set; }
-
-        public FluentColumn<T> Add(ICellAdapter adapter)
-        {
-            ColumnInfo.Add(adapter);
-            return this;
-        }
-        
-        public FluentColumn<T> Link(CellLink<T> link)
-        {
-            ColumnInfo.Add(link);
-            return this;
-        }
-        
-        public FluentColumn<T> Link(Func<Cell, T, string> getUrl) => Link(new CellLink<T>(getUrl));
-    }
-    
 
     public class MapToReporting<T> : IMapToReporting<T>
     {
@@ -100,17 +55,25 @@ namespace TextRenderZ.Reporting
 
         public MapToReporting() : this(new MapToReportingCellAdapter()) { }
 
-        
-
         public IMapToReportingCellAdapter CellAdapter { get; set; }
+
+        private void Add(ColumnInfo c)
+        {
+            CellAdapter.Enrich(c);
+            columns.Add(c);
+        }
         
         public MapToReporting<T> AddColumn(ColumnInfo manual)
         {
-            columns.Add(manual);
+            Add(manual);
             return this;
         }
         public MapToReporting<T> AddColumns(IEnumerable<ColumnInfo> cols)
         {
+            foreach (var col in cols)
+            {
+                CellAdapter.Enrich(col);
+            }
             columns.AddRange(cols);
             return this;
         }
@@ -135,9 +98,7 @@ namespace TextRenderZ.Reporting
             var columnInfoFunc = new ColumnInfoFunc(typeof(TP), typeof(T), title, o => (object?)getVal((T) o));
 #pragma warning restore 8605
             if (setupCol != null) setupCol(new FluentColumn<T>(columnInfoFunc));
-            columns.Add(columnInfoFunc);
-
-            
+            Add(columnInfoFunc);
             return this;
         }
         
@@ -145,15 +106,13 @@ namespace TextRenderZ.Reporting
         public MapToReporting<T> AddColumn(string? title, PropertyInfo info, Action<FluentColumn<T>>? setupCol = null)
         {
             var columnInfoPropertyInfo = new ColumnInfoPropertyInfo(info, typeof(T), title ?? info.Name);
-            columns.Add(columnInfoPropertyInfo);
+            Add(columnInfoPropertyInfo);
             if (setupCol != null) setupCol(new FluentColumn<T>(columnInfoPropertyInfo));
             return this;
         }
         
         public MapToReporting<T> AddColumn(string propName) => AddColumn(null, props.First(x => x.Name == propName), null);
-        
-       
-        
+
 
 
         class MapToRow : IMapToRow<T>
@@ -232,14 +191,47 @@ namespace TextRenderZ.Reporting
             return this;
         }
 
-        public void CodeGen(TextWriter output, bool wrapHtml = true)
+        public void CodeGen(TextWriter output, IMapToReportingCodeGen<T> codeGen = null, bool wrapHtml = true)
         {
-            if (wrapHtml) output.WriteLine("<pre class='code-cs'><code>");
-            foreach (var prop in typeof(T).GetProperties())
+            codeGen ??= new CodeGenAddCols();
+
+            if (!wrapHtml)
             {
-                output.WriteLine($"\t.AddColumn(\"{prop.Name}\", x=>x.{prop.Name})");
+                codeGen.CodeGen(output, this);
+                return;
             }
-            if (wrapHtml) output.WriteLine("</code></pre>");
+
+            if (codeGen.Format == CodeGenOutput.CSharp)
+            {
+                output.WriteLine("<pre class='code-cs'><code>");
+                codeGen.CodeGen(output, this);
+                output.WriteLine("</code></pre>");
+                return;
+            }
+            
+            if (codeGen.Format == CodeGenOutput.Html)
+            {
+                output.WriteLine("<textarea class=\"w-100\" style='width: 100%;'>");
+                codeGen.CodeGen(output, this);
+                output.WriteLine("</textarea>");
+                return;
+            }
+            
+        }
+
+        public class CodeGenAddCols : IMapToReportingCodeGen<T>
+        {
+            public CodeGenOutput Format => CodeGenOutput.CSharp;
+
+            public void CodeGen(TextWriter output, IMapToReporting<T> report)
+            {
+                foreach (var prop in typeof(T).GetProperties())
+                {
+                    output.WriteLine($"\t.AddColumn(\"{prop.Name}\", x=>x.{prop.Name})");
+                }
+            }
         }
     }
+    
+     
 }

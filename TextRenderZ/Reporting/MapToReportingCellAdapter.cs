@@ -7,16 +7,19 @@ namespace TextRenderZ.Reporting
 
         public virtual void Enrich(ColumnInfo col)
         {
-            if (col.TargetType == typeof(decimal))
+            if (col.TargetType == typeof(int) 
+             
+                || col.TargetType == typeof(decimal)
+                || col.TargetType == typeof(double)
+                || col.TargetType == typeof(float)
+                || col.TargetType == typeof(byte)
+                || col.TargetType == typeof(long)
+                || col.TargetType == typeof(uint)
+                || col.TargetType == typeof(ulong)
+                )
             {
                 col.TextAlign = TextAlign.Right;
                 col.IsNumber = NumberStyle.Number;
-                return;
-            }
-            if (col.TargetType == typeof(double))
-            {
-                col.TextAlign = TextAlign.Right;
-                col.IsNumber  = NumberStyle.Number;
                 return;
             }
         }
@@ -41,7 +44,7 @@ namespace TextRenderZ.Reporting
                 cell.CellInfo.IsErr       = double.MaxValue.Equals(valueDouble);
                 cell.CellInfo.IsNeg = valueDouble < 0;
                 
-                cell.ValueDisplay = AddPrefixSuffixNull(cell, valueDouble.ToString("#,##0.00"));
+                cell.ValueDisplay = valueDouble.ToString("#,##0.00");
                 return;
             }
             
@@ -53,7 +56,7 @@ namespace TextRenderZ.Reporting
                 cell.CellInfo.IsErr = valueInt == Decimal.MaxValue;
                 cell.CellInfo.IsNeg = valueInt < 0;
                 
-                cell.ValueDisplay = AddPrefixSuffixNull(cell, valueInt.ToString("#,##0"));
+                cell.ValueDisplay = valueInt.ToString("#,##0");
                 return;
             }
 
@@ -65,19 +68,26 @@ namespace TextRenderZ.Reporting
                 cell.CellInfo.IsErr = valueDate == DateTime.MaxValue;
                 
                 
-                cell.ValueDisplay = AddPrefixSuffixNull(cell, valueDate.ToString("yyyy-MM-dd"));
+                cell.ValueDisplay = valueDate.ToString("yyyy-MM-dd");
                 return;
             }
+            
+            if (cell.ValueInput is long valLong)
+            {
+                cell.IsNull = valLong == long.MinValue;
+                
+                cell.CellInfo       ??= new CellInfo();
+                cell.CellInfo.IsErr =   valLong == long.MaxValue;
+                cell.CellInfo.IsNeg =   valLong < 0;
+                
+                cell.ValueDisplay = valLong.ToString("#,##0");
+                return;
+            }
+
 
             cell.ValueDisplay = cell.ValueInput?.ToString();
         }
 
-        protected virtual string AddPrefixSuffixNull(Cell cell, string toString)
-        {
-            return (cell.CellInfo?.Prefix ?? cell.Column.Prefix ?? "")
-                   + (toString ?? "")
-                   + (cell.CellInfo?.Suffix ?? cell.Column.Suffix ?? "");
-        }
 
         public Cell ConvertToCell(ColumnInfo col, Exception error, object container)
         {

@@ -52,9 +52,9 @@ namespace TextRenderZ.Reporting
                     var cell = table[xx, yy]?.GetValueString();
                     if (cell != null)
                     {
-                        if (col.TextAlign == TextAlign.Left) outp.Write(cell.PadRight(maxSize[xx]));
-                        else if (col.TextAlign == TextAlign.Right) outp.Write(cell.PadLeft(maxSize[xx]));
-                        else if (col.TextAlign == TextAlign.Center) outp.Write(cell.PadRight(maxSize[xx]/2).PadLeft(maxSize[xx]/2));    
+                        if (col.TextAlign == TextAlign.Right) outp.Write(cell.PadLeft(maxSize[xx]));
+                        else if (col.TextAlign == TextAlign.Center) outp.Write(cell.PadRight(maxSize[xx]/2).PadLeft(maxSize[xx]/2));
+                        else outp.Write(cell.PadRight(maxSize[xx]));
                     }
                     else
                     {

@@ -128,6 +128,15 @@ namespace TextRenderZ
                })
                .Append("</ul>");
 
+        
+        public static FluentString Join<T>(IEnumerable<T> items) =>
+            Join(items, JoinOptions.Default, (fs, item) => fs.Append(item?.ToString()) );
+        
+        public static FluentString Join<T>(IEnumerable<T> items, JoinOptions options) =>
+            Join(items, options, (fs, item) => fs.Append(item?.ToString()) );
+        
+        public static FluentString Join<T>(IEnumerable<T> items, Func<T, object> each) =>
+            Join(items, JoinOptions.Default, (fs, item) => fs.Append(each(item).ToString()) );
 
         public static FluentString Join<T>(IEnumerable<T> items, Action<FluentString, T> each) =>
             Join(items, JoinOptions.Default, each);
