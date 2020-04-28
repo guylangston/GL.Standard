@@ -1,11 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace TextRenderZ
 {
-     public class FluentString
+    
+    public class JoinOptions
+    {
+        public static JoinOptions Default = new JoinOptions()
+        {
+            WrapAfter = 0,
+            SkipNull = false,
+            Sep = ", "
+            
+        };
+
+        public int    WrapAfter { get; set; }
+        public bool   SkipNull  { get; set; }
+        public string Sep       { get; set; }
+    }
+    
+    public class FluentString
     {
         private readonly StringBuilder sb = new StringBuilder();
         private string sep;
@@ -142,19 +159,20 @@ namespace TextRenderZ
             Join(items, JoinOptions.Default, each);
 
         public static FluentString Join<T>(IEnumerable<T> items, JoinOptions options, Action<FluentString, T> each)
-            => new FluentString()
+            => new FluentString(options.Sep)
                 .ForEach(items, (f, d) =>
                 {
+                    if (options.SkipNull && d == null) return;
                     f.Sep();
                     each(f, d);
+                    if (options.WrapAfter > 0)
+                    {
+                        // TODO: Implement WrapAfter X chars
+                    }
+                    
                 });
 
-        public class JoinOptions
-        {
-            public static JoinOptions Default = new JoinOptions();
-            public int WrapAfter { get; set; }
-            public bool SkipNull { get; set; }
-        }
+        
 
     }
 }

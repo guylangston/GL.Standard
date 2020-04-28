@@ -3,30 +3,23 @@ using System.Collections.Generic;
 
 namespace TextRenderZ.Reporting.Adapters
 {
+    public class Dim<T>
+    {
+        public string Name  { get; set; }
+        public int    Index { get; set; }
+        public T      Value { get; set; }
+    }
+    
     public class TableReportModel<TCol, TRow>
     {
-        public List<Col> Columns { get;  } = new List<Col>();
-        public List<Row> Rows { get;  } = new List<Row>();
+        public List<Dim<TCol>> Columns { get;  } = new List<Dim<TCol>>();
+        public List<Dim<TRow>> Rows { get;  } = new List<Dim<TRow>>();
         
-        public class Col
-        {
-            public string Name { get; set; }
-            public int Index { get; set; }
-            public TCol Value { get; set; }
-        }
-        
-        public class Row
-        {
-            public string Name  { get; set; }
-            public int    Index { get; set; }
-            public TRow Value { get; set; }
-        }
-
         public void AddCols(IEnumerable<TCol> cols, Func<TCol, string> getName)
         {
             foreach (var col in cols)
             {
-                var cc = new Col()
+                var cc = new Dim<TCol>()
                 {
                     Index = Columns.Count,
                     Name  = getName(col),
@@ -34,15 +27,13 @@ namespace TextRenderZ.Reporting.Adapters
                 };
                 Columns.Add(cc);
             }
-            
         }
-        
         
         public void AddRows(IEnumerable<TRow> rows, Func<TRow, string> getName)
         {
             foreach (var row in rows)
             {
-                var cc = new Row()
+                var cc = new Dim<TRow>()
                 {
                     Index = Rows.Count,
                     Name  = getName(row),
