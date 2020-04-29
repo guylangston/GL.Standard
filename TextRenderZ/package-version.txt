@@ -1,1 +1,9 @@
-0.0.5
+# Version       (line no/index matters! # are not real comments)
+0.0.7
+
+# Single Line Tag / Release
+nuget publish
+
+# Old Versions for reference
+0.0.5 FluentString
+
