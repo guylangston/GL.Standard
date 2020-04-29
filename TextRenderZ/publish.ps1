@@ -1,4 +1,4 @@
-# File Version 2.0
+# File Version 2.1
 $proj = ls *.csproj | Select-Object -First 1
 $name = [System.IO.Path]::GetFileNameWithoutExtension(($proj).Name)
 $outFolder = "C:\Projects\LocalNuGet"
@@ -13,6 +13,7 @@ $ver = $verList[1]
 $tag = $verList[4]
 $framework = (Select-Xml -Path $proj -XPath "//TargetFramework" | Select-Object Node).Node.InnerText
 
+echo "        Project: '$proj'"
 echo "        Package: '$name'"
 echo "Package-Version: '$ver' tag: '$tag'"
 echo "      Framework: $framework"
@@ -23,13 +24,23 @@ $confirmation = Read-Host "Does the version look correct? y/n"
 if ($confirmation -eq 'y') {
 
     if ($isPackage) {
+        
+        echo "[Updating] Update $proj to based on ./package-version.txt"
+        [xml]$prjxml = Get-Content -Path $proj
+        ($prjxml | select-xml -xpath "//Version").Node.InnerText = $ver
+        ($prjxml | select-xml -xpath "//AssemblyVersion").Node.InnerText = $ver
+        ($prjxml | select-xml -xpath "//PackageVersion").Node.InnerText = $ver
+        ($prjxml | select-xml -xpath "//FileVersion").Node.InnerText = $ver
+        ($prjxml | select-xml -xpath "//PackageReleaseNotes").Node.InnerText = $tag
+        $prjxml.Save([string]$proj)
+        
 
         pushd
     
-        dotnet build -c Release --no-incremental -p:WarningLevel=0  "-p:PackageVersion=$ver"
+        dotnet build -c Release --no-incremental -p:WarningLevel=0  
         if ($LASTEXITCODE -ne 0) {throw $LASTEXITCODE}
     
-        dotnet pack -c Release "-p:PackageVersion=$ver" --no-build
+        dotnet pack -c Release --no-build
         if ($LASTEXITCODE -ne 0) {throw $LASTEXITCODE}
 
         # Do this last in case of error
