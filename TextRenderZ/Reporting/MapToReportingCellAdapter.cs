@@ -36,17 +36,7 @@ namespace TextRenderZ.Reporting
 
         public virtual void Enrich(Cell cell)
         {
-            if (cell.ValueInput is double valueDouble)
-            {
-                cell.IsNull = double.IsNaN(valueDouble);
-                
-                cell.CellInfo ??= new CellInfo();
-                cell.CellInfo.IsErr       = double.MaxValue.Equals(valueDouble);
-                cell.CellInfo.IsNeg = valueDouble < 0;
-                
-                cell.ValueDisplay = valueDouble.ToString("#,##0.00");
-                return;
-            }
+            
             
             if (cell.ValueInput is int valueInt)
             {
@@ -69,6 +59,42 @@ namespace TextRenderZ.Reporting
                 
                 
                 cell.ValueDisplay = valueDate.ToString("yyyy-MM-dd");
+                return;
+            }
+            
+            if (cell.ValueInput is double valueDouble)
+            {
+                cell.IsNull = double.IsNaN(valueDouble);
+                
+                cell.CellInfo       ??= new CellInfo();
+                cell.CellInfo.IsErr =   double.MaxValue.Equals(valueDouble);
+                cell.CellInfo.IsNeg =   valueDouble < 0;
+                
+                cell.ValueDisplay = valueDouble.ToString("#,##0.00");
+                return;
+            }
+            
+            if (cell.ValueInput is decimal valDecimal)
+            {
+                cell.IsNull = valDecimal == Decimal.MinValue;
+                
+                cell.CellInfo       ??= new CellInfo();
+                cell.CellInfo.IsErr = valDecimal == Decimal.MaxValue;
+                cell.CellInfo.IsNeg =   valDecimal < 0;
+                
+                cell.ValueDisplay = valDecimal.ToString("#,##0.00");
+                return;
+            }
+            
+            if (cell.ValueInput is float valFloat)
+            {
+                cell.IsNull = float.IsNaN(valFloat);
+                
+                cell.CellInfo       ??= new CellInfo();
+                cell.CellInfo.IsErr =   float.MaxValue.Equals(valFloat);
+                cell.CellInfo.IsNeg =   valFloat < 0;
+                
+                cell.ValueDisplay = valFloat.ToString("#,##0.00");
                 return;
             }
             

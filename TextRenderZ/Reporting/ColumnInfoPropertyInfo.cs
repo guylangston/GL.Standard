@@ -9,11 +9,13 @@ namespace TextRenderZ.Reporting
             : base(info.PropertyType, containerType, title)
         {
             PropertyInfo = info; 
+            
         }
             
             
         public PropertyInfo PropertyInfo { get; }
-            
+
+        public override string PropName => PropertyInfo.Name;
         public override object GetCellValue(object container) => PropertyInfo.GetValue(container);
     }
 }

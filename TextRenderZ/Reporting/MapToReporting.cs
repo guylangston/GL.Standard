@@ -31,7 +31,8 @@ namespace TextRenderZ.Reporting
     {
         Text,
         CSharp,
-        Html
+        Html,
+        Sql
     }
 
     public interface IMapToReportingCodeGen<T>
@@ -176,6 +177,7 @@ namespace TextRenderZ.Reporting
             return this;
         }
 
+        
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp )
         {
             renderer.Render(this, items, outp);
@@ -216,6 +218,11 @@ namespace TextRenderZ.Reporting
                 output.WriteLine("</textarea>");
                 return;
             }
+            
+            
+            output.WriteLine($"<pre class='code-{codeGen.Format}'><code>");
+            codeGen.CodeGen(output, this);
+            output.WriteLine("</code></pre>");
             
         }
 

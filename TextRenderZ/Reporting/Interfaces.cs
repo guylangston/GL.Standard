@@ -32,6 +32,8 @@ namespace TextRenderZ.Reporting
     {
         public IReadOnlyList<ColumnInfo> Columns { get;  }
         public IEnumerable<IMapToRow<T>> GetRows(IEnumerable<T> items);
+        
+        // TODO: Drop TextWriter in factor of ISimpleTextWriter + wrappers
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp);
         public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, StringBuilder sb);
     }

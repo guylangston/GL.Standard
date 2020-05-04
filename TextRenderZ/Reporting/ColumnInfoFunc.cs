@@ -12,10 +12,10 @@ namespace TextRenderZ.Reporting
         public ColumnInfoFunc(Type targetType, Type containerType, string title, Func<object?, object?> getValue) 
             : base(targetType, containerType, title)
         {
-                
             this.func = getValue;
         }
 
+        public override string PropName => Title?.Replace(" ", "");
         public override object GetCellValue(object container) => func(container);
     }
 }

@@ -14,8 +14,10 @@ namespace TextRenderZ.Reporting
 
         public Type TargetType    { get;  }
         public Type ContainerType { get; }
+
+        public abstract string PropName { get; }
+        public string Title    { get; }
         
-        public string      Title       { get; }
         public string?     Description { get; set; }
         public TextAlign   TextAlign   { get; set; }
         public NumberStyle IsNumber    { get; set; }
