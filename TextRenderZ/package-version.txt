@@ -1,10 +1,11 @@
 # Version       (line no/index matters! # are not real comments)
-0.0.8
+0.0.9
 
 # Single Line Tag / Release
-nuget publish.ps1, better versioning
+Better CodeGen Features
 
 # Old Versions for reference
+0.0.8 nuget publish.ps1, better versioning
 0.0.7 packaging
 0.0.5 FluentString
 
