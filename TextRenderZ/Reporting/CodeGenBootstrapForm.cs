@@ -12,7 +12,7 @@ namespace TextRenderZ.Reporting
             foreach (var col in report.Columns)
             {
                 var prop = GetPropName(col);
-                if (col.IsNumber != NumberStyle.None)
+                if (col.IsNumber)
                 {
                     output.WriteLine(
                         $@"<div class=""form-group"">

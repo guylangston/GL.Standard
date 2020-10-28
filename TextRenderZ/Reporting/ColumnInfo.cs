@@ -20,10 +20,14 @@ namespace TextRenderZ.Reporting
         
         public string?     Description { get; set; }
         public TextAlign   TextAlign   { get; set; }
-        public NumberStyle IsNumber    { get; set; }
+        public NumberStyle NumberStyle    { get; set; }
+        public bool IsNumber => NumberStyle != NumberStyle.NotNumber && NumberStyle != NumberStyle.Unknown;
         public string      Prefix      { get; set; } // May be overridden per cell
         public string      Suffix      { get; set; } // May be overridden per cell
         public string      GroupTitle { get; set; }
+
+        
+        
         
         public IReadOnlyDictionary<string, string> Attributes { get; set; }
         
@@ -41,7 +45,7 @@ namespace TextRenderZ.Reporting
         public ColumnInfo AsPercentage()
         {
             Suffix   = "%";
-            IsNumber = NumberStyle.Percentage;
+            NumberStyle = NumberStyle.Percentage;
             return this;
         }
     }

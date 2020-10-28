@@ -3,6 +3,8 @@ using System.IO;
 
 namespace TextRenderZ.Reporting
 {
+   
+    
     public class MapToReportingRendererHtml : IMapToReportingRenderer
     {
         public string TableClass { get; set; } = "table table-sm";
@@ -17,7 +19,7 @@ namespace TextRenderZ.Reporting
         
         public MapToReportingRendererHtml() : this(new CellFormatter()) { }
 
-        public void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, TextWriter outp)
+        public void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, ITextWriterAdapter outp)
         {
             if (CellFormatter == null)
             {

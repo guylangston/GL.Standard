@@ -34,7 +34,7 @@ namespace TextRenderZ.Reporting
     
     public interface ICellFormatter
     {
-        void WriteCell(TextWriter tw, Cell input, ref CellContainerTag tag);
+        void WriteCell(ITextWriterAdapter tw, Cell input, ref CellContainerTag tag);
     }
 
     public class CellFormatter : ICellFormatter
@@ -42,7 +42,7 @@ namespace TextRenderZ.Reporting
         public string NullToken { get; set; } = "~";
         public string ErrorToken { get; set; } = "#ERR#";
 
-        public void WriteCell(TextWriter tw, Cell inputValue, ref CellContainerTag tag)
+        public void WriteCell(ITextWriterAdapter tw, Cell inputValue, ref CellContainerTag tag)
         {
             MapToTag(inputValue, ref tag);
             
@@ -100,7 +100,7 @@ namespace TextRenderZ.Reporting
                     tw.Write("</span>");
                 }
                 
-                tw.Write(inputValue.ValueDisplay);
+                tw.Write(inputValue.ValueDisplay?.ToString());
                 
                 var sx =  inputValue.CellInfo?.Suffix ?? inputValue.Column.Suffix;
                 if (sx != null)
@@ -142,12 +142,12 @@ namespace TextRenderZ.Reporting
             if (inputValue.Column.TextAlign != TextAlign.None) tag.AddClass($"align-{inputValue.Column.TextAlign.ToString().ToLowerInvariant()}");
 
             if (inputValue.IsNull) tag.AddClass("null");
-            if (inputValue.Column.IsNumber != NumberStyle.None) tag.AddClass("num");
-            if (inputValue.Column.IsNumber == NumberStyle.Percentage) tag.AddClass("num-pct");
+            if (inputValue.Column.IsNumber) tag.AddClass("num");
+            if (inputValue.Column.NumberStyle == NumberStyle.Percentage) tag.AddClass("num-pct");
             if (inputValue.CellInfo != null)
             {
-                if (inputValue.CellInfo.IsNumber != NumberStyle.None) tag.AddClass("num");
-                if (inputValue.CellInfo.IsNumber == NumberStyle.Percentage) tag.AddClass("num-pct");
+                if (inputValue.CellInfo.IsNumber) tag.AddClass("num");
+                if (inputValue.CellInfo.NumberStyle == NumberStyle.Percentage) tag.AddClass("num-pct");
                 if (inputValue.CellInfo.IsErr)  tag.AddClass("err");
                 if (inputValue.CellInfo.IsNeg)  tag.AddClass("num-neg");
             }

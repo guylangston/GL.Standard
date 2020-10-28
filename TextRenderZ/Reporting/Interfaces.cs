@@ -23,7 +23,7 @@ namespace TextRenderZ.Reporting
     }
     
     public enum TextAlign { None, Left, Center, Right }
-    public enum NumberStyle { None, Number, Percentage, PercentageMul100, Currency }
+    public enum NumberStyle { Unknown, NotNumber, Number, Percentage, PercentageMul100, Currency }
 
     /// <summary>
     /// For ease the nomenclature of Column/Row/Cell; think of a single Item as always wrapped into Cell[1] array
@@ -33,19 +33,25 @@ namespace TextRenderZ.Reporting
         public IReadOnlyList<ColumnInfo> Columns { get;  }
         public IEnumerable<IMapToRow<T>> GetRows(IEnumerable<T> items);
         
-        // TODO: Drop TextWriter in factor of ISimpleTextWriter + wrappers
-        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp);
-        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, StringBuilder sb);
+        public IMapToReporting<T> RenderTo(T item, IMapToReportingRendererSingle renderer, ITextWriterAdapter outp);
+        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, ITextWriterAdapter outp);
+    }
+    
+    public interface ITextWriterAdapter
+    {
+        void Write(string? s);
+        void WriteLine(string? s);
+        void WriteLine();
     }
 
     public interface IMapToReportingRenderer
     {
-        void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, TextWriter outp);
+        void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, ITextWriterAdapter outp);
     }
     
     public interface IMapToReportingRendererSingle
     {
-        void Render<T>(IMapToReporting<T> mapping, T items, TextWriter outp);
+        void Render<T>(IMapToReporting<T> mapping, T items, ITextWriterAdapter outp);
     }
     
     public interface IMapToRow<T> : IEnumerable<Cell>

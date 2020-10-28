@@ -19,7 +19,7 @@ namespace TextRenderZ.Reporting
                 )
             {
                 col.TextAlign = TextAlign.Right;
-                col.IsNumber = NumberStyle.Number;
+                col.NumberStyle = NumberStyle.Number;
                 return;
             }
         }
@@ -36,13 +36,12 @@ namespace TextRenderZ.Reporting
 
         public virtual void Enrich(Cell cell)
         {
-            
-            
             if (cell.ValueInput is int valueInt)
             {
                 cell.IsNull = valueInt == Decimal.MinValue;
                 
                 cell.CellInfo       ??= new CellInfo();
+                if (cell.Column.NumberStyle == NumberStyle.Unknown) cell.CellInfo.NumberStyle = NumberStyle.Number;
                 cell.CellInfo.IsErr = valueInt == Decimal.MaxValue;
                 cell.CellInfo.IsNeg = valueInt < 0;
                 
@@ -67,6 +66,8 @@ namespace TextRenderZ.Reporting
                 cell.IsNull = double.IsNaN(valueDouble);
                 
                 cell.CellInfo       ??= new CellInfo();
+                if (cell.Column.NumberStyle == NumberStyle.Unknown) cell.CellInfo.NumberStyle = NumberStyle.Number;
+                cell.CellInfo.ToolTip = valueDouble.ToString();
                 cell.CellInfo.IsErr =   double.MaxValue.Equals(valueDouble);
                 cell.CellInfo.IsNeg =   valueDouble < 0;
                 
@@ -79,6 +80,8 @@ namespace TextRenderZ.Reporting
                 cell.IsNull = valDecimal == Decimal.MinValue;
                 
                 cell.CellInfo       ??= new CellInfo();
+                if (cell.Column.NumberStyle == NumberStyle.Unknown) cell.CellInfo.NumberStyle = NumberStyle.Number;
+                cell.CellInfo.ToolTip = valDecimal.ToString();
                 cell.CellInfo.IsErr = valDecimal == Decimal.MaxValue;
                 cell.CellInfo.IsNeg =   valDecimal < 0;
                 
@@ -91,6 +94,8 @@ namespace TextRenderZ.Reporting
                 cell.IsNull = float.IsNaN(valFloat);
                 
                 cell.CellInfo       ??= new CellInfo();
+                if (cell.Column.NumberStyle == NumberStyle.Unknown) cell.CellInfo.NumberStyle = NumberStyle.Number;
+                cell.CellInfo.ToolTip = valFloat.ToString();
                 cell.CellInfo.IsErr =   float.MaxValue.Equals(valFloat);
                 cell.CellInfo.IsNeg =   valFloat < 0;
                 
@@ -103,6 +108,8 @@ namespace TextRenderZ.Reporting
                 cell.IsNull = valLong == long.MinValue;
                 
                 cell.CellInfo       ??= new CellInfo();
+                if (cell.Column.NumberStyle == NumberStyle.Unknown) cell.CellInfo.NumberStyle = NumberStyle.Number;
+                cell.CellInfo.ToolTip = valLong.ToString();
                 cell.CellInfo.IsErr =   valLong == long.MaxValue;
                 cell.CellInfo.IsNeg =   valLong < 0;
                 
@@ -111,7 +118,7 @@ namespace TextRenderZ.Reporting
             }
 
 
-            cell.ValueDisplay = cell.ValueInput?.ToString();
+            cell.ValueDisplay = cell.ValueInput;
         }
 
 

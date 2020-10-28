@@ -2,6 +2,9 @@ using System;
 
 namespace TextRenderZ.Reporting
 {
+    
+    
+    
     public sealed class Cell
     {
         public Cell(ColumnInfo colInfo, CellInfo? cellInfo, object? valueInput, object containerValue)

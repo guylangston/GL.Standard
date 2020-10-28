@@ -16,7 +16,7 @@ namespace TextRenderZ.Reporting
         
         public MapToReportingRendererSingleDt() : this(new CellFormatter()) { }
 
-        public void Render<T>(IMapToReporting<T> mapping, T item, TextWriter outp)
+        public void Render<T>(IMapToReporting<T> mapping, T item, ITextWriterAdapter outp)
         {
        
             outp.WriteLine($"<dl class='{ContainerClass}'>");

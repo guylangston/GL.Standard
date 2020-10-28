@@ -7,7 +7,10 @@ namespace TextRenderZ.Reporting
         public string Id        { get; set; }
         public string ClassAttr { get; set; }
         
-        public NumberStyle IsNumber { get; set; }
+        
+        
+        public NumberStyle NumberStyle { get; set; }
+        public bool IsNumber => NumberStyle != NumberStyle.NotNumber && NumberStyle != NumberStyle.Unknown;
         public bool        IsErr    { get; set; } // Number NaN, etc (not exception info)
         public bool        IsNeg    { get; set; } // Number NaN, etc (not exception info)
         public string      Prefix   { get; set; } // May be overridden per cell

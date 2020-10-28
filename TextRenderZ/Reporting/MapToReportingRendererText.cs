@@ -8,7 +8,7 @@ namespace TextRenderZ.Reporting
     {
         
         
-        public void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, TextWriter outp)
+        public void Render<T>(IMapToReporting<T> mapping, IEnumerable<T> items, ITextWriterAdapter outp)
         {
             var columns = mapping.Columns;
             
@@ -29,7 +29,7 @@ namespace TextRenderZ.Reporting
                 outp.Write(col.Title?.PadRight(maxSize[ii]));
                 outp.Write(" | ");
             }
-            outp.WriteLine();
+            outp.WriteLine(null);
             
             outp.Write("|");
             for (var ii = 0; ii < columns.Count; ii++)

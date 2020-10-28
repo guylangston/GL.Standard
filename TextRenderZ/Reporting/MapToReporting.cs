@@ -41,6 +41,37 @@ namespace TextRenderZ.Reporting
         void CodeGen(TextWriter output, IMapToReporting<T> report);
     }
 
+    public static class MapToReportingExt
+    {
+        public static IMapToReporting<T> RenderTo<T>(this IMapToReporting<T> map, IEnumerable<T> items, IMapToReportingRenderer renderer, StringBuilder sb) 
+        {
+            using var sw = new StringWriter(sb);
+            map.RenderTo(items, renderer, new TextWriterAdapter(sw));
+            return map;
+        }
+        
+        public static IMapToReporting<T> RenderTo<T>(this IMapToReporting<T> map, IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter tw) 
+        {
+            map.RenderTo(items, renderer, new TextWriterAdapter(tw));
+            return map;
+        }
+        
+        public static IMapToReporting<T> RenderTo<T>(this IMapToReporting<T> map, T item, IMapToReportingRendererSingle renderer, StringBuilder sb) 
+        {
+            using var sw = new StringWriter(sb);
+            map.RenderTo(item, renderer, new TextWriterAdapter(sw));
+            return map;
+        }
+        
+        public static IMapToReporting<T> RenderTo<T>(this IMapToReporting<T> map, T item, IMapToReportingRendererSingle renderer, TextWriter tw) 
+        {
+            map.RenderTo(item, renderer, new TextWriterAdapter(tw));
+            return map;
+        }
+    
+    }
+    
+
     public class MapToReporting<T> : IMapToReporting<T>
     {
         private readonly List<ColumnInfo> columns = new List<ColumnInfo>();
@@ -171,14 +202,14 @@ namespace TextRenderZ.Reporting
             }
         }
         
-        public IMapToReporting<T> RenderTo(T item, IMapToReportingRendererSingle renderer, TextWriter outp )
+        public IMapToReporting<T> RenderTo(T item, IMapToReportingRendererSingle renderer, ITextWriterAdapter outp )
         {
             renderer.Render(this, item, outp);
             return this;
         }
 
         
-        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, TextWriter outp )
+        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, ITextWriterAdapter outp )
         {
             renderer.Render(this, items, outp);
 
@@ -186,12 +217,7 @@ namespace TextRenderZ.Reporting
         }
 
        
-        public IMapToReporting<T> RenderTo(IEnumerable<T> items, IMapToReportingRenderer renderer, StringBuilder sb)
-        {
-            using var sw = new StringWriter(sb);
-            RenderTo(items, renderer, sw);
-            return this;
-        }
+       
 
         public void CodeGen(TextWriter output, IMapToReportingCodeGen<T> codeGen = null, bool wrapHtml = true)
         {
